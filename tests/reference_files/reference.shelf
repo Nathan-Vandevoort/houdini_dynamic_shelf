@@ -9,7 +9,7 @@
   <tool name="item_01" label="Item_01" icon="NETWORKS_cop2">
     <script scriptType="python"><![CDATA[print("Item_02")]]></script>
   </tool>
-  <toolshelf name="test_shelf" label="Test_Shelf">
+  <toolshelf name="test_shelf" label="Test Shelf">
     <memberTool name="sample_tool"/>
     <memberTool name="item_03"/>
     <memberTool name="item_01"/>
@@ -17,7 +17,7 @@
   <tool name="item_015" label="Item_01" icon="NETWORKS_cop2">
     <script scriptType="python"><![CDATA[print("Item_02")]]></script>
   </tool>
-  <toolshelf name="test_shelf2" label="Test_Shelf2">
+  <toolshelf name="test_shelf2" label="Test Shelf 2">
     <memberTool name="sample_tool"/>
     <memberTool name="item_015"/>
   </toolshelf>

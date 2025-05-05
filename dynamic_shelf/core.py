@@ -17,17 +17,18 @@ class ShelfManager:
     def __init__(self) -> None:
         self.shelf_file_paths = self._get_shelf_files_from_env()
         self.tool_shelves: dict[str, dict[str, Tool]] = {}
+        self.shelf_labels: dict[str, str] = {}
 
     def register_item(self, path: str) -> None:
         if not os.path.isfile(path):
             logger.warning(f'Shelf file does not exist.')
             logger.debug(f'{path=}')
-            return None
+            return
 
         if not path.endswith('.shelf'):
             logger.warning(f'File is not a .shelf file.')
             logger.debug(f'{path=}')
-            return None
+            return
 
         self.shelf_file_paths.append(path)
 
@@ -45,13 +46,52 @@ class ShelfManager:
             save_path = temp_file.name
             temp_file.close()
 
-        write_shelf_file_from_tools(self.tool_shelves, save_path)
+        root = ET.Element('shelfDocument')
+        created_tool_names = []
+        for shelf_name in self.tool_shelves:
+
+            # Create tools.
+            for tool_name in self.tool_shelves[shelf_name]:
+
+                # Skip already created tools.
+                if tool_name in created_tool_names:
+                    continue
+
+                tool = self.tool_shelves[shelf_name][tool_name]
+                attributes = {
+                    'name': tool.name,
+                    'label': tool.label,
+                    'icon': tool.icon,
+                }
+                new_tool = ET.SubElement(root, 'tool', attrib=attributes)
+
+                script_attributes = {'scriptType': tool.script.scriptType}
+                new_script = ET.SubElement(new_tool, 'script', attrib=script_attributes)
+                new_script.text = ET.CDATA(tool.script.body)
+
+                created_tool_names.append(tool_name)
+
+            # Create shelf.
+            shelf_label = self.shelf_labels.get(shelf_name)
+            if not shelf_label:
+                shelf_label = shelf_name.title()
+            shelf_attributes = {'name': shelf_name, 'label': shelf_label}
+            tool_shelf = ET.SubElement(root, 'toolshelf', attrib=shelf_attributes)
+            for shelf_tool_name in tuple(self.tool_shelves[shelf_name]):
+                ET.SubElement(
+                    tool_shelf, 'memberTool', attrib={'name': shelf_tool_name}
+                )
+
+        tree = ET.ElementTree(root)
+        tree.write(save_path, encoding='utf-8', xml_declaration=True, pretty_print=True)
+
         return save_path
 
     def _build_shelf(self) -> None:
         logger.debug(f'building shelf...')
         for path in self.shelf_file_paths:
-            tool_elements = get_tool_elements_from_shelf_file(path)
+            # HACK: the way shelf_labels are implemented here is really gross. Maybe do it better?
+            tool_elements, shelf_labels = get_tool_elements_from_shelf_file(path)
             new_tools = elements_to_tools(tool_elements)
 
             for tool_shelf in new_tools:
@@ -59,6 +99,7 @@ class ShelfManager:
                     existing_tools.update(new_tools[tool_shelf])
                 else:
                     self.tool_shelves[tool_shelf] = new_tools[tool_shelf]
+            self.shelf_labels.update(shelf_labels)
 
     @staticmethod
     def _get_shelf_files_from_env() -> list[str]:
@@ -83,7 +124,9 @@ class ShelfManager:
         return shelf_file_paths
 
 
-def get_tool_elements_from_shelf_file(path: str) -> dict[str, dict[str, ET.Element]]:
+def get_tool_elements_from_shelf_file(
+    path: str,
+) -> tuple[dict[str, dict[str, ET.Element]], dict[str, str]]:
     """
     Gets all the tools from a .shelf file as xml elements.
     Automatically ensures ensures all returned tools are memberTools.
@@ -96,28 +139,33 @@ def get_tool_elements_from_shelf_file(path: str) -> dict[str, dict[str, ET.Eleme
 
     if not os.path.isfile(path):
         logger.warning(f'Failed to find .shelf file at {path}')
-        return {}
+        return {}, {}
 
     if not path.endswith('.shelf'):
         logger.warning(f'Input file is not a .shelf file.')
-        return {}
+        return {}, {}
 
     try:
         tree = ET.parse(path)
     except ET.ParseError as e:
         logger.warning(f'Invalid XML format in {path}')
         logger.debug(e)
-        return {}
+        return {}, {}
 
     tools = tree.findall('tool')
 
     # Get all the member tools.
     tool_shelves = tree.findall('toolshelf')
     member_tool_data: dict[str, list[str]] = {}
+    shelf_labels: dict[str, str] = {}
     for tool_shelf in tool_shelves:
         shelf_name = tool_shelf.attrib.get('name')
         if not shelf_name:
             continue
+
+        shelf_label = tool_shelf.attrib.get('label')
+        if not shelf_label:
+            shelf_label = shelf_name.title()
 
         member_tools = tool_shelf.findall('memberTool')
         if not member_tools:
@@ -132,6 +180,7 @@ def get_tool_elements_from_shelf_file(path: str) -> dict[str, dict[str, ET.Eleme
             existing_member_tool_names.extend(member_tool_names)
         else:
             member_tool_data[shelf_name] = member_tool_names
+        shelf_labels[shelf_name] = shelf_label
 
     # Ensure all tools are member tools.
     filtered_tools = {}
@@ -147,7 +196,7 @@ def get_tool_elements_from_shelf_file(path: str) -> dict[str, dict[str, ET.Eleme
                 else:
                     filtered_tools[tool_shelf_name] = {tool_name: tool}
 
-    return filtered_tools
+    return filtered_tools, shelf_labels
 
 
 def elements_to_tools(
@@ -207,42 +256,3 @@ def elements_to_tools(
             shelves[shelf_name] = tools
 
     return shelves
-
-
-def write_shelf_file_from_tools(
-    shelves: dict[str, dict[str, Tool]], save_path: str
-) -> None:
-    root = ET.Element('shelfDocument')
-    created_tool_names = []
-    for shelf_name in shelves:
-
-        # Create tools.
-        for tool_name in shelves[shelf_name]:
-
-            # Skip already created tools.
-            if tool_name in created_tool_names:
-                continue
-
-            tool = shelves[shelf_name][tool_name]
-            attributes = {
-                'name': tool.name,
-                'label': tool.label,
-                'icon': tool.icon,
-            }
-            new_tool = ET.SubElement(root, 'tool', attrib=attributes)
-
-            script_attributes = {'scriptType': tool.script.scriptType}
-            new_script = ET.SubElement(new_tool, 'script', attrib=script_attributes)
-            new_script.text = ET.CDATA(tool.script.body)
-
-            created_tool_names.append(tool_name)
-
-        # Create shelf.
-        # TODO: Make some way of recording shelves names and labels
-        shelf_attributes = {'name': shelf_name, 'label': shelf_name.title()}
-        tool_shelf = ET.SubElement(root, 'toolshelf', attrib=shelf_attributes)
-        for shelf_tool_name in tuple(shelves[shelf_name]):
-            ET.SubElement(tool_shelf, 'memberTool', attrib={'name': shelf_tool_name})
-
-    tree = ET.ElementTree(root)
-    tree.write(save_path, encoding='utf-8', xml_declaration=True, pretty_print=True)
