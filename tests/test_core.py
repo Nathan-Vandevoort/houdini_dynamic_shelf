@@ -57,6 +57,7 @@ def test_write_shelf():
     manager.register_item(paths[0])
     manager.register_item(paths[3])
     shelf_path = manager.write_shelf()
+    logger.debug(f'{shelf_path.replace('\\', '/')=}')
 
     test_shelf_path = os.path.join(
         os.path.dirname(__file__), 'reference_files', 'reference.shelf'
