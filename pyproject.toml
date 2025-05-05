@@ -1,0 +1,40 @@
+[project]
+name = "dynamic_shelf"
+description = "A dynamic shelf builder for Houdini"
+version = "0.0.0"
+authors = [
+    {name = "Nathan Vandevoort", email = "nathan.v.2021@gmail.com"},
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "lxml<=5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=24.0",
+    "types-houdini>=19.0",
+    "python-semantic-release>=9.0",
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["dynamic_shelf*"]
+
+[tool.black]
+skip-string-normalization = true
+
+[tool.semantic_release]
+version_toml  = ["pyproject.toml:project.version"]
+version_variables = ["package.py:version"]
+
+[tool.semantic_release.remote]
+ignore_token_for_push = true  # use ssh keys
+type = "bitbucket"
+
+[tool.semantic_release.publish]
+upload_to_vcs_release = false  # don't publish

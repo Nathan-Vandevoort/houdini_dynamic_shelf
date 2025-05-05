@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<shelfDocument>
+  <tool name="sample_tool" label="Sample Tool" icon="PLASMA_App">
+    <script scriptType="python"><![CDATA[script for the tool]]></script>
+  </tool>
+  <tool name="item_03" label="Item_03" icon="NETWORKS_cop2">
+    <script scriptType="python"><![CDATA[print("Item_03")]]></script>
+  </tool>
+  <tool name="item_01" label="Item_01" icon="NETWORKS_cop2">
+    <script scriptType="python"><![CDATA[print("Item_02")]]></script>
+  </tool>
+  <toolshelf name="test_shelf" label="Test_Shelf">
+    <memberTool name="sample_tool"/>
+    <memberTool name="item_03"/>
+    <memberTool name="item_01"/>
+  </toolshelf>
+  <tool name="item_015" label="Item_01" icon="NETWORKS_cop2">
+    <script scriptType="python"><![CDATA[print("Item_02")]]></script>
+  </tool>
+  <toolshelf name="test_shelf2" label="Test_Shelf2">
+    <memberTool name="sample_tool"/>
+    <memberTool name="item_015"/>
+  </toolshelf>
+</shelfDocument>
