@@ -10,7 +10,7 @@ requires = [
 
 build_command = "bash {root}/build.sh {install}"
 
-uuid = "4541732180ac434fa55e228ac7817f14"
+uuid = "e8b2373a44bd44d1b331fe6fcb30a64c"
 
 
 def commands():
