@@ -1,1 +1,1 @@
-from core import ShelfManager
+from .core import ShelfManager

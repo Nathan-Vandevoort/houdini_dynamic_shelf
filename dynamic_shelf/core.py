@@ -19,7 +19,7 @@ class ShelfManager:
         self.tool_shelves: dict[str, dict[str, Tool]] = {}
         self.shelf_labels: dict[str, str] = {}
 
-    def register_item(self, path: str) -> None:
+    def register_shelf_file(self, path: str) -> None:
         if not os.path.isfile(path):
             logger.warning(f'Shelf file does not exist.')
             logger.debug(f'{path=}')

@@ -40,22 +40,22 @@ def test_build_shelf():
     logger.info(f'{os.getenv(constants.SEARCH_VAR)}')
 
     manager = core.ShelfManager()
-    manager.register_item(paths[0])
-    manager.register_item(paths[3])
+    manager.register_shelf_file(paths[0])
+    manager.register_shelf_file(paths[3])
     manager._build_shelf()
 
 
 def test_write_shelf():
 
-    os.environ[constants.SEARCH_VAR] = os.pathsep.join(
-        (os.path.dirname(paths[1]), os.path.dirname(paths[2]))
-    )
+    # os.environ[constants.SEARCH_VAR] = os.pathsep.join(
+    #     (os.path.dirname(paths[1]), os.path.dirname(paths[2]))
+    # )
 
     logger.info(f'{os.getenv(constants.SEARCH_VAR)}')
 
     manager = core.ShelfManager()
-    manager.register_item(paths[0])
-    manager.register_item(paths[3])
+    manager.register_shelf_file(paths[0])
+    manager.register_shelf_file(paths[3])
     shelf_path = manager.write_shelf()
     logger.debug(f'{shelf_path.replace('\\', '/')=}')
 
